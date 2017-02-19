@@ -2,6 +2,9 @@
 
 import requests
 import config
+from lxml import etree
+import io
+import codecs
 
 import logging
 
@@ -25,24 +28,43 @@ requests_log.propagate = True
 
 class Proxy_loader():
     def __init__(self):
-        self.headers = {
-            'user-agent': config.user_agent,
-            'content-type': "application/x-www-form-urlencoded",
-            'cache-control': "no-cache",
-        }
+        pass
 
-    def load_online(self, ports):
-        self.form_data = config.payload
-        r = requests.post(config.proxy_list_url, data=self.form_data, headers=self.headers)
+    def load_online(self):
+        r = requests.post(config.url, headers=config.headers, params=config.querystring)
         if r.status_code == requests.codes.ok:
             return r.text
         else:
             r.raise_for_status()
 
     def parse_loaded(self, data_for_parse):
-        return data_for_parse
+        parser = etree.HTMLParser(encoding='utf-8')
+        tree = etree.parse(io.StringIO(data_for_parse), parser)
 
-    def load(self, ports):
-        loaded_data = self.load_online(ports)
+        result_data = []
+
+        counter = tree.xpath('count(//*[@id="tblproxy"]/tr)')
+        try:
+            counter = int(counter)
+        except Exception as e:
+            raise e
+
+        for item in range(3, counter, 1):
+            row = tree.xpath('//*[@id="tblproxy"]/tr[' + str(item) + ']/td/script')
+
+            ip = row[0].text.replace("document.write('", "")
+            ip = ip.replace("')", "")
+            port = row[1].text.replace("document.write(gp.dep('", "")
+            port = port.replace("'))", "")
+            port = int(port, 16)
+
+            result_data.append([ip, port])
+
+        return result_data
+
+    def load(self):
+        # loaded_data = self.load_online()
+
+        loaded_data = codecs.open("out.html", "r", "utf-8").read()
         parsed_data = self.parse_loaded(loaded_data)
         return parsed_data

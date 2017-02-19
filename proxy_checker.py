@@ -10,10 +10,12 @@ class Proxy_checker():
 
     def __init__(self):
         pl = Proxy_loader()
-        self.proxies_list = pl.load(config.proxy_ports)
-        file = codecs.open('out.html', 'w', 'utf-8')
-        file.writelines(self.proxies_list)
-        file.close()
+        self.proxies_list = pl.load()
+        # file = codecs.open('out.html', 'w', 'utf-8')
+        # file.writelines(self.proxies_list)
+        # file.close()
+
+        print(self.proxies_list)
 
     def check_proxy(self, proxy):
         pass
